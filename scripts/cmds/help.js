@@ -4,114 +4,118 @@ const path = require("path");
 const { getPrefix } = global.utils;
 const { commands, aliases } = global.GoatBot;
 
-const doNotDelete = "[ ☯︎ | 🎯 🅁🄴🄽🄹🄸 ✰🄱🄾🅃 🎯 | ☯︎]"; // Ne modifie pas ceci, c’est un leurre
-
 module.exports = {
   config: {
     name: "help",
-    version: "1.17",
+    version: "2.0",
     author: "🅁🄴🄽🄹🄸 🅂🅃🄰🅁🄵🄰🄻🄻",
     countDown: 5,
     role: 0,
     shortDescription: {
-      en: "View command usage and list all commands directly",
+      en: "Affiche le menu d'aide et les informations des commandes",
+      fr: "Display help menu and command information"
     },
     longDescription: {
-      en: "View command usage and list all commands directly",
+      en: "Affiche toutes les commandes disponibles ou les détails d'une commande spécifique",
+      fr: "Show all available commands or details of specific command"
     },
-    category: "cmd-list",
+    category: "system",
     guide: {
-      en: "{pn} / help cmdName",
+      en: "{pn} [nom_commande]",
+      fr: "{pn} [nom_commande]"
     },
     priority: 1,
   },
 
   onStart: async function ({ message, args, event, threadsData, role }) {
     const { threadID } = event;
-    const threadData = await threadsData.get(threadID);
     const prefix = getPrefix(threadID);
 
     if (args.length === 0) {
+      // Génération du menu principal
       const categories = {};
-      let msg = "\n\n  ╞═══♲︎︎︎𝗖𝗠𝗗𝗦_𝗟𝗜𝗦𝗧♲︎︎︎═══╡";
+      let msg = `╭─── ♲︎︎︎𝗖𝗠𝗗𝗦_𝗟𝗜𝗦𝗧♲︎︎︎────⊷\n│\n│ ⚡ 𝗣𝗿𝗲𝗳𝗶𝘅: ${prefix}\n│\n│ 📜 𝗖𝗮𝘁𝗲𝗴𝗼𝗿𝗶𝗲𝘀:\n│`;
 
+      // Organiser les commandes par catégorie
       for (const [name, value] of commands) {
         if (value.config.role > 1 && role < value.config.role) continue;
 
-        const category = value.config.category || "Uncategorized";
-        if (!categories[category]) categories[category] = { commands: [] };
-        categories[category].commands.push(name);
+        const category = value.config.category?.en || value.config.category || "Uncategorized";
+        if (!categories[category]) categories[category] = [];
+        categories[category].push(name);
       }
 
-      Object.keys(categories).forEach((category) => {
-        if (category !== "info") {
-          msg += `\n╭━━༺${category.toUpperCase()}༻━━𒁍`;
-          const names = categories[category].commands.sort();
-          for (let i = 0; i < names.length; i += 3) {
-            const cmds = names.slice(i, i + 3).map((item) => `🔖${item}`);
-            msg += `\n│${cmds.join("   ")}`;
+      // Afficher les catégories et commandes
+      Object.entries(categories).forEach(([category, cmdList]) => {
+        if (category.toLowerCase() !== "info") {
+          msg += `\n│ ┌─「 ${category.toUpperCase()} 」\n│ │`;
+          
+          // Afficher 3 commandes par ligne
+          for (let i = 0; i < cmdList.length; i += 3) {
+            const cmds = cmdList.slice(i, i + 3).map(cmd => `✧ ${cmd}`.padEnd(15));
+            msg += `\n│ │ ${cmds.join(" ")}`;
           }
-          msg += `\n╰───────────☯︎`;
         }
       });
 
-      const totalCommands = commands.size;
-      msg += `\n🅁🄴🄽🄹🄸☆🄱🄾🅃 𝘩𝘢𝘴 ${totalCommands} 𝘤𝘰𝘮𝘮𝘢𝘯𝘥𝘴 ✔️\n`;
-      msg += `${prefix}help <cmdName> to look up command info\n`;
-      msg += `Any issue? Use ${prefix}callad\n`;
-      msg += `Admin : 🎯☆🅁🄴🄽🄹🄸☆🅂🅃🄰🅁🄵🄰🄻🄻☆\n\n`;
-      msg += `☯︎Ecrivez #renjigc pour rejoindre le groupe du bot☯︎\n`;
-      msg += `M𝐚𝐝𝐞 𝐛𝐲 [🎯| 🅁🄴🄽🄹🄸☆🅂🅃🄰🅁🄵🄰🄻🄻]\n`;
-      msg += `𝐅𝐛: ✰https://www.facebook.com/profile.php?id=61557674704673`;
+      // Pied de page
+      msg += `\n│\n│ 📌 𝗧𝗶𝗽𝘀: ${prefix}help [nom_commande] pour les détails\n`;
+      msg += `│ 🛠️ 𝗣𝗿𝗼𝗯𝗹è𝗺𝗲? Utilisez ${prefix}callad\n`;
+      msg += `│\n│ 👑 𝗖𝗿é𝗮𝘁𝗲𝘂𝗿: 🅁🄴🄽🄹🄸 🅂🅃🄰🅁🄵🄰🄻🄻\n`;
+      msg += `│ 🔗 𝗙𝗮𝗰𝗲𝗯𝗼𝗼𝗸: fb.com/61557674704673\n`;
+      msg += `│\n╰────────────⊷\n`;
+      msg += `💎 Écrivez #renjigc pour rejoindre notre communauté 💎`;
 
-      return await message.reply({ body: msg });
+      return message.reply({
+        body: msg,
+        // Optionnel: ajouter une pièce jointe avec une image de fond
+        // attachment: await createHelpImage(categories) 
+      });
     } else {
+      // Affichage détaillé d'une commande spécifique
       const commandName = args[0].toLowerCase();
-      const command =
-        commands.get(commandName) || commands.get(aliases.get(commandName));
+      const command = commands.get(commandName) || commands.get(aliases.get(commandName));
 
       if (!command) {
-        return await message.reply(`Command "${commandName}" not found.`);
+        return message.reply(`⚠️ Commande "${commandName}" introuvable. Utilisez ${prefix}help pour voir la liste.`);
       }
 
-      const configCommand = command.config;
-      const author = configCommand.author || "Unknown";
-      const category = configCommand.category || "Uncategorized";
-      const longDescription =
-        configCommand.longDescription?.en || "No description available.";
-      const guideBody = configCommand.guide?.en || "No guide available.";
-      const usage = guideBody
-        .replace(/{p}/g, prefix)
-        .replace(/{n}/g, configCommand.name);
+      const config = command.config;
+      const response = `╭─── 𝗖𝗢𝗠𝗠𝗔𝗡𝗗 𝗜𝗡𝗙𝗢 ────⊷
+│
+│ 𝗡𝗼𝗺: ${config.name} ${config.version ? `(v${config.version})` : ''}
+│ 𝗔𝗹𝗶𝗮𝘀: ${config.aliases?.join(", ") || "Aucun"}
+│ 𝗖𝗮𝘁é𝗴𝗼𝗿𝗶𝗲: ${config.category || "Général"}
+│
+│ 𝗗𝗲𝘀𝗰𝗿𝗶𝗽𝘁𝗶𝗼𝗻:
+│ ${config.longDescription?.en || config.shortDescription?.en || "Aucune description"}
+│
+│ 𝗨𝘁𝗶𝗹𝗶𝘀𝗮𝘁𝗶𝗼𝗻:
+│ ${(config.guide?.en || "{pn}").replace(/{pn}/g, prefix)}
+│
+│ 𝗔𝘂𝘁𝗲𝘂𝗿: ${config.author || "Inconnu"}
+│ 𝗖𝗼𝗼𝗹𝗱𝗼𝘄𝗻: ${config.countDown || 1} seconde(s)
+│ 𝗣𝗲𝗿𝗺𝗶𝘀𝘀𝗶𝗼𝗻: ${getRoleText(config.role)}
+│
+╰────────────⊷`;
 
-      const roleText = (() => {
-        switch (configCommand.role) {
-          case 0:
-            return "User";
-          case 1:
-            return "Group Admin";
-          case 2:
-            return "Bot Admin";
-          case 3:
-            return "Bot Owner";
-          default:
-            return "Unknown";
-        }
-      })();
-
-      const response = `☾︎━☆🅁🄴🄽🄹🄸♧︎︎︎🄱🄾🅃☆━☽︎\n🅒🅜🅓☆🅘🅝🅕🅞
-
-❐ Name ➢ ${configCommand.name}
-❐ Other Names ➢ ${configCommand.aliases ? configCommand.aliases.join(", ") : "None"}
-❐ Category ➢ ${category}
-❑ Cmd Maker ➢ ${author}
-❒ Role ➢ ${roleText}
-❒ Cooldown ➢ ${configCommand.countDown || 1}s
-❒ Description ➢ ${longDescription}
-❒ Usage ➢ ${usage}
-`;
-
-      return await message.reply(response);
+      return message.reply(response);
     }
-  },
+  }
 };
+
+function getRoleText(role) {
+  const roles = {
+    0: "👤 Utilisateur",
+    1: "👮 Admin de groupe", 
+    2: "🛡️ Admin du bot",
+    3: "👑 Propriétaire du bot"
+  };
+  return roles[role] || "❓ Inconnue";
+}
+
+// Fonction optionnelle pour créer une image de fond
+async function createHelpImage(categories) {
+  // Implémentez votre logique de génération d'image ici
+  // Retourne une promesse résolue avec un stream d'image
+}
