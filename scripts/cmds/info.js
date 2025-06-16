@@ -46,16 +46,7 @@ module.exports = {
         adminListText += `• @${name} (${id})\n`;
       }
 
-      // Nombre d'utilisateurs (fichiers dans data/users)
-      const usersPath = `${__dirname}/../data/users`;
-      const users = fs.existsSync(usersPath) ? fs.readdirSync(usersPath) : [];
-      const userCount = users.length;
-
-      // Nombre de groupes de messagerie (fichiers dans data/threads)
-      const threadsPath = `${__dirname}/../data/threads`;
-      const threads = fs.existsSync(threadsPath) ? fs.readdirSync(threadsPath) : [];
-      const threadCount = threads.length;
-
+      
       // Message final
       const msg =
         `📌 ${botName} — [ ${botPseudo} ]\n` +
@@ -63,9 +54,7 @@ module.exports = {
         `🔹 Préfixe : ${prefix}\n` +
         `🔹 Durée d'activité : ${duration}\n` +
         `🔹 Admins (${admins.length}) :\n${adminListText}` +
-        `🔹 Utilisateurs enregistrés : ${userCount}\n` +
-        `🔹 Groupes de messagerie : ${threadCount}`;
-
+ 
       return message.reply({
         body: msg,
         mentions: adminMentions
