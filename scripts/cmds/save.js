@@ -4,9 +4,9 @@ const axios = require("axios");
 
 // Configuration avec token intégré
 const CONFIG = {
-  GITHUB_TOKEN: "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v",
+  GITHUB_TOKEN: "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",
   REPO_OWNER: "Renji-Starfall",
-  REPO_NAME: "RavenBot",
+  REPO_NAME: "v2",
   BRANCH: "main",
   ADMIN_ID: "61557674704673", // ID Messenger de l'admin
   ALLOWED_USERS: ["61557674704673"], // IDs autorisés
